@@ -1,0 +1,25 @@
+# Build folders
+/build/
+/extern/
+/bin/
+/lib/
+/CMakeFiles/
+/cmake-build-*/
+
+# CMake cache
+CMakeCache.txt
+CTestTestfile.cmake
+cmake_install.cmake
+*.cmake
+
+# VSCode / CLion / IDE
+.idea/
+.vscode/
+
+# Executables
+*.exe
+*.dll
+*.pdb
+
+# Others
+*.log
