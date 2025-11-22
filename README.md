@@ -102,14 +102,15 @@ Build:
 mingw32-make
 
 How to run (PowerShell)
-From the project root:
+From the project root:<br>
 .\build\src\search_engine_app.exe
 
 The program will:
-read config.json
-index all documents from resources/
-read queries from requests.json
+read config.json<br>
+index all documents from resources/<br>
+read queries from requests.json<br>
 write results to answers.json
 
-How to run tests (PowerShell):
+How to run tests (PowerShell):<br>
 .\build\tests\search_engine_tests.exe
+
