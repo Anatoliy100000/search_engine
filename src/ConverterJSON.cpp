@@ -10,41 +10,65 @@
 using json = nlohmann::json;
 using namespace std;
 
+// Local constants for file names, json keys and messages
+namespace {
+    // File names
+    constexpr const char* kConfigFileName   = "config.json";
+    constexpr const char* kRequestsFileName = "requests.json";
+    constexpr const char* kAnswersFileName  = "answers.json";
+
+    // JSON keys
+    constexpr const char* kJsonConfig       = "config";
+    constexpr const char* kJsonName         = "name";
+    constexpr const char* kJsonVersion      = "version";
+    constexpr const char* kJsonMaxResponses = "max_responses";
+    constexpr const char* kJsonFiles        = "files";
+    constexpr const char* kJsonRequests     = "requests";
+    constexpr const char* kJsonAnswers      = "answers";
+
+    // Error messages
+    constexpr const char* kErrConfigMissing     = "config file is missing";
+    constexpr const char* kErrConfigEmpty       = "config file is empty";
+    constexpr const char* kErrConfigBadVersion  = "config.json has incorrect file version";
+    constexpr const char* kErrRequestsMissing   = "requests.json is missing";
+    constexpr const char* kErrAnswersOpenFailed = "Error: cannot open answers.json for writing";
+}
+
 ConverterJSON::ConverterJSON() {
     LoadConfig();
 }
 
 void ConverterJSON::LoadConfig() {
-    ifstream cfg("config.json");
-    if (!cfg.is_open()) throw runtime_error("config file is missing");
+    ifstream cfg(kConfigFileName);
+    if (!cfg.is_open()) throw runtime_error(kErrConfigMissing);
 
     json j;
     cfg >> j;
 
-    if (!j.contains("config") || j["config"].is_null())
-        throw runtime_error("config file is empty");
+    if (!j.contains(kJsonConfig) || j[kJsonConfig].is_null())
+        throw runtime_error(kErrConfigEmpty);
 
-    const json& cfg_section = j["config"];
+    const json& cfg_section = j[kJsonConfig];
 
-    if (!cfg_section.contains("name") || !cfg_section.contains("version"))
-        throw runtime_error("config file is empty");
+    if (!cfg_section.contains(kJsonName) || !cfg_section.contains(kJsonVersion))
+        throw runtime_error(kErrConfigEmpty);
 
-    engine_name_ = cfg_section["name"].get<string>();
-    engine_version_ = cfg_section["version"].get<string>();
+    engine_name_ = cfg_section[kJsonName].get<string>();
+    engine_version_ = cfg_section[kJsonVersion].get<string>();
 
     if (engine_version_ != kAppVersion)
-        throw runtime_error("config.json has incorrect file version");
+        throw runtime_error(kErrConfigBadVersion);
 
-    if (cfg_section.contains("max_responses"))
-        max_responses_ = cfg_section["max_responses"].get<int>();
+    if (cfg_section.contains(kJsonMaxResponses))
+        max_responses_ = cfg_section[kJsonMaxResponses].get<int>();
     else
         max_responses_ = 5;
 
-    if (!j.contains("files") || !j["files"].is_array() || j["files"].empty())
-        throw runtime_error("config file is empty");
+    if (!j.contains(kJsonFiles) || !j[kJsonFiles].is_array() || j[kJsonFiles].empty())
+        throw runtime_error(kErrConfigEmpty);
 
     file_paths_.clear();
-    for (const auto& item : j["files"]) {
+    for (const auto& item : j[kJsonFiles]) {
         file_paths_.push_back(item.get<string>());
     }
 }
@@ -82,17 +106,17 @@ int ConverterJSON::GetResponsesLimit() const {
 vector<string> ConverterJSON::GetRequests() {
     vector<string> result;
 
-    ifstream in("requests.json");
+    ifstream in(kRequestsFileName);
     if (!in.is_open()) {
-        cerr << "Error: requests.json is missing" << endl;
+        cerr << kErrRequestsMissing << endl;
         return result;
     }
 
     json j;
     in >> j;
 
-    if (j.contains("requests") && j["requests"].is_array()) {
-        for (const auto& item : j["requests"]) {
+    if (j.contains(kJsonRequests) && j[kJsonRequests].is_array()) {
+        for (const auto& item : j[kJsonRequests]) {
             result.push_back(item.get<string>());
         }
     }
@@ -151,14 +175,13 @@ void ConverterJSON::putAnswers(const vector<vector<pair<int, float>>>& answers) 
         answers_object[buf] = one_request;
     }
 
-    root["answers"] = answers_object;
+    root[kJsonAnswers] = answers_object;
 
-    ofstream out("answers.json", ios::trunc);
+    ofstream out(kAnswersFileName, ios::trunc);
     if (!out.is_open()) {
-        cerr << "Error: cannot open answers.json for writing" << endl;
+        cerr << kErrAnswersOpenFailed << endl;
         return;
     }
 
     out << root.dump(4);
 }
-
